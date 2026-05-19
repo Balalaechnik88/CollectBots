@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class ResourceStorage : MonoBehaviour
 {
-    private int _resourceCount = 0;
+    private int _count;
 
-    public void AddResource()
+    public void RegisterDelivery()
     {
-        _resourceCount++;
-        Debug.Log($"Ресурсов на базе: {_resourceCount}");
+        _count++;
+        Debug.Log($"Ресурсов на складе: {_count}");
     }
 }

@@ -3,9 +3,10 @@ using UnityEngine;
 
 public class ResourceSpawner : MonoBehaviour
 {
-    [SerializeField] private Resource _resourcePrefab;
+    [SerializeField] private ResourcePool _pool;
     [SerializeField] private float _spawnRadius = 15f;
     [SerializeField] private float _spawnDelay = 3f;
+    [SerializeField] private float _spawnHeight = 0.5f;
 
     private WaitForSeconds _waitDelay;
 
@@ -21,17 +22,19 @@ public class ResourceSpawner : MonoBehaviour
 
     private IEnumerator SpawnRoutine()
     {
-        while (true)
+        while (enabled)
         {
             yield return _waitDelay;
-            Spawn(_resourcePrefab, transform.position, _spawnRadius);
+            Spawn();
         }
     }
 
-    public void Spawn(Resource prefab, Vector3 center, float radius)
+    private void Spawn()
     {
-        Vector2 randomCircle = Random.insideUnitCircle * radius;
-        Vector3 spawnPosition = new Vector3(center.x + randomCircle.x, 0.5f, center.z + randomCircle.y);
-        Instantiate(prefab, spawnPosition, Quaternion.identity);
+        Vector2 randomCircle = Random.insideUnitCircle * _spawnRadius;
+        Vector3 spawnPosition = new Vector3(transform.position.x + randomCircle.x, _spawnHeight, transform.position.z + randomCircle.y);
+
+        Resource newResource = _pool.Get();
+        newResource.transform.position = spawnPosition;
     }
 }

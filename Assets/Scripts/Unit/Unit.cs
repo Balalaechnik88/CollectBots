@@ -11,10 +11,19 @@ public class Unit : MonoBehaviour
     private Transform _baseTransform;
     private bool _isCarrying;
 
-    public event Action<Unit> OnBecameIdle;
-    public event Action OnResourceDelivered;
+    public event Action<Unit, Resource> OnTaskCompleted;
 
     public bool IsIdle { get; private set; } = true;
+
+    public void AssignTask(Resource resource, Transform baseTransform)
+    {
+        _targetResource = resource;
+        _baseTransform = baseTransform;
+
+        IsIdle = false;
+        _isCarrying = false;
+        _mover.MoveTo(_targetResource.transform.position);
+    }
 
     private void Update()
     {
@@ -25,45 +34,39 @@ public class Unit : MonoBehaviour
 
         if (_isCarrying == false)
         {
-            if (_targetResource == null)
-            {
-                ResetUnit();
-                return;
-            }
-
-            if (_mover.HasReachedDestination(_interactDistance))
-            {
-                _carrier.PickUp(_targetResource);
-                _isCarrying = true;
-                _mover.MoveTo(_baseTransform.position);
-            }
+            HandleMovingToResource();
         }
         else
         {
-            if (_mover.HasReachedDestination(_interactDistance))
-            {
-                _carrier.DropAndDestroy();
-                OnResourceDelivered?.Invoke();
-                ResetUnit();
-            }
+            HandleReturningToBase();
         }
     }
-    public void AssignTask(Resource resource, Transform baseTransform)
-    {
-        _targetResource = resource;
-        _baseTransform = baseTransform;
-        _targetResource.SetTargeted();
 
-        IsIdle = false;
-        _isCarrying = false;
-        _mover.MoveTo(_targetResource.transform.position);
+    private void HandleMovingToResource()
+    {
+        if (_mover.HasReachedDestination(_interactDistance))
+        {
+            _carrier.Grab(_targetResource);
+            _isCarrying = true;
+            _mover.MoveTo(_baseTransform.position);
+        }
     }
 
-    private void ResetUnit()
+    private void HandleReturningToBase()
+    {
+        if (_mover.HasReachedDestination(_interactDistance))
+        {
+            Resource deliveredResource = _carrier.Drop();
+
+            SetIdle();
+            OnTaskCompleted?.Invoke(this, deliveredResource);
+        }
+    }
+
+    private void SetIdle()
     {
         _targetResource = null;
         _isCarrying = false;
         IsIdle = true;
-        OnBecameIdle?.Invoke(this);
     }
 }

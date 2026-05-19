@@ -2,26 +2,25 @@ using UnityEngine;
 
 public class ResourceScanner : MonoBehaviour
 {
-    [SerializeField] private float _scanRadius = 50f;
-    [SerializeField] private LayerMask _resourceLayer;
+    [SerializeField] private float _radius = 50f;
+    [SerializeField] private LayerMask _layer;
+    [SerializeField] private ResourceTracker _tracker;
 
-    public bool TryFindUnassignedResource(Vector3 center, out Resource foundResource)
+    private void Update()
     {
-        foundResource = null;
-        Collider[] hits = Physics.OverlapSphere(center, _scanRadius, _resourceLayer);
+        Scan();
+    }
+
+    private void Scan()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, _radius, _layer);
 
         foreach (Collider hit in hits)
         {
             if (hit.TryGetComponent(out Resource resource))
             {
-                if (resource.IsTargeted == false)
-                {
-                    foundResource = resource;
-                    return true;
-                }
+                _tracker.RegisterFoundResource(resource);
             }
         }
-
-        return false;
     }
 }

@@ -4,19 +4,21 @@ public class ResourceCarrier : MonoBehaviour
 {
     [SerializeField] private Transform _carryPoint;
 
-    public void PickUp(Resource resource)
+    private Resource _carriedResource;
+
+    public void Grab(Resource resource)
     {
-        resource.transform.SetParent(_carryPoint);
-        resource.transform.localPosition = Vector3.zero;
+        _carriedResource = resource;
+        _carriedResource.transform.SetParent(_carryPoint);
+        _carriedResource.transform.localPosition = Vector3.zero;
     }
 
-    public void DropAndDestroy()
+    public Resource Drop()
     {
-        if (_carryPoint.childCount > 0)
-        {
-            Transform resourceTransform = _carryPoint.GetChild(0);
-            resourceTransform.SetParent(null);
-            Destroy(resourceTransform.gameObject);
-        }
+        Resource droppedResource = _carriedResource;
+        droppedResource.transform.SetParent(null);
+        _carriedResource = null;
+
+        return droppedResource;
     }
 }

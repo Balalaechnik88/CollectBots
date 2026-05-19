@@ -3,19 +3,19 @@ using UnityEngine;
 
 public class BaseCenter : MonoBehaviour
 {
-    [SerializeField] private ResourceScanner _scanner;
+    [SerializeField] private ResourceTracker _tracker;
     [SerializeField] private ResourceStorage _storage;
+    [SerializeField] private ResourcePool _pool;
     [SerializeField] private List<Unit> _units;
 
-    private Queue<Unit> _idleUnits = new Queue<Unit>();
+    private Queue<Unit> _idleQueue = new Queue<Unit>();
 
-    private void Start()
+    private void Awake()
     {
         foreach (Unit unit in _units)
         {
-            _idleUnits.Enqueue(unit);
-            unit.OnBecameIdle += HandleUnitIdle;
-            unit.OnResourceDelivered += HandleResourceDelivered;
+            _idleQueue.Enqueue(unit);
+            unit.OnTaskCompleted += HandleUnitTaskCompleted;
         }
     }
 
@@ -23,32 +23,32 @@ public class BaseCenter : MonoBehaviour
     {
         foreach (Unit unit in _units)
         {
-            unit.OnBecameIdle -= HandleUnitIdle;
-            unit.OnResourceDelivered -= HandleResourceDelivered;
+            unit.OnTaskCompleted -= HandleUnitTaskCompleted;
         }
     }
 
     private void Update()
     {
-        if (_idleUnits.Count == 0)
+        if (_idleQueue.Count == 0)
         {
             return;
         }
 
-        if (_scanner.TryFindUnassignedResource(transform.position, out Resource resource))
+        if (_tracker.TryAllocateResource(out Resource resource))
         {
-            Unit availableUnit = _idleUnits.Dequeue();
-            availableUnit.AssignTask(resource, transform);
+            Unit unit = _idleQueue.Dequeue();
+            unit.AssignTask(resource, transform);
         }
     }
 
-    private void HandleUnitIdle(Unit unit)
+    private void HandleUnitTaskCompleted(Unit unit, Resource deliveredResource)
     {
-        _idleUnits.Enqueue(unit);
-    }
+        _storage.RegisterDelivery();
 
-    private void HandleResourceDelivered()
-    {
-        _storage.AddResource();
+        _tracker.RemoveDeliveredResource(deliveredResource);
+
+        _pool.Release(deliveredResource);
+
+        _idleQueue.Enqueue(unit);
     }
 }
